@@ -1,0 +1,16 @@
+build/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.out
+.DS_Store
+.vscode/
+.idea/
+*.user
+*.tmp
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
