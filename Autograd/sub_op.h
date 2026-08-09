@@ -2,12 +2,13 @@
 #include "operation.h"
 #include "../Tensor/tensor.h"
 #include <vector>
+#include <memory>
 
 class SubOp : public Operation {
 private:
-    Tensor* first_;
-    Tensor* second_;
+    std::shared_ptr<Tensor> first_;
+    std::shared_ptr<Tensor> second_;
 public:
-    Tensor forward(const std::vector<Tensor*>& inputs) override;
-    void backward(const Tensor& grad_output) const override;
+    std::shared_ptr<Tensor> forward(const std::vector<std::shared_ptr<Tensor>>& inputs) override;
+    void backward(const Tensor& grad_output) override;
 };

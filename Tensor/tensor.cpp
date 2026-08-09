@@ -33,8 +33,7 @@ Tensor::Tensor(std::vector<size_t> shape, float k) : shape_(std::move(shape)) {
 
 Tensor Tensor::Random(std::vector<size_t> shape, float min, float max) {
     Tensor result(shape);
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(42);
     std::uniform_real_distribution<float> dist(min, max);
     for (size_t i = 0; i < result.size_; i++) {
         result.data_[i] = dist(gen);
@@ -133,16 +132,28 @@ const std::vector<size_t>& Tensor::GetShape() const {
     return shape_;
 }
 
-float* Tensor::data() {
+std::vector<float> Tensor::Data() {
+    return data_;
+}
+
+const std::vector<float> Tensor::Data() const {
+    return data_;
+}
+
+float* Tensor::RawData() {
     return data_.data();
 }
 
-const float* Tensor::data() const {
+const float* Tensor::RawData() const {
     return data_.data();
 }
 
-Tensor* Tensor::Grad() const {
+std::shared_ptr<Tensor> Tensor::Grad() const {
     return grad_;
+}
+
+void Tensor::ClearGrad() {
+    grad_ = nullptr;
 }
 
 Operation* Tensor::GradFn() const {

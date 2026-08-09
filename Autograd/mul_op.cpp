@@ -2,37 +2,42 @@
 #include "../Tensor/tensor.h"
 #include "../Matmul/matmul.h"
 #include <vector>
+#include <memory>
 
 
-Tensor MulOp::forward(const std::vector<Tensor*>& inputs) {
-    Tensor tensor = MatMul(*inputs[0], *inputs[1]);
+std::shared_ptr<Tensor> MulOp::forward(const std::vector<std::shared_ptr<Tensor>>& inputs) {
     first_ = inputs[0];
     second_ = inputs[1];
-    tensor.grad_fn_ = this;
-    return tensor;
+    
+    auto result = std::make_shared<Tensor>(MatMul(*first_, *second_));
+    result->grad_fn_ = this;
+    
+    
+    return result;
 }
 
-void MulOp::backward(const Tensor& grad_output) const {
-    Tensor grad_input(MatMul(grad_output, second_->Transpose()));
+void MulOp::backward(const Tensor& grad_output) {
+    Tensor grad_first = MatMul(grad_output, second_->Transpose());
+    
     if (first_->grad_ != nullptr) {
-        *first_->grad_ += grad_input;
+        *first_->grad_ += grad_first;
     } else {
-        first_->grad_ = new Tensor(grad_input);
+        first_->grad_ = std::make_shared<Tensor>(grad_first);
     }
-
+    
     if (first_->grad_fn_ != nullptr) {
-        first_->grad_fn_->backward(grad_input);
+        first_->grad_fn_->backward(grad_first);
     }
-
-    grad_input = MatMul(first_->Transpose(), grad_output);
-
+    
+    Tensor grad_second = MatMul(first_->Transpose(), grad_output);
+    
     if (second_->grad_ != nullptr) {
-        *second_->grad_ += grad_input;
+        *second_->grad_ += grad_second;
     } else {
-        second_->grad_ = new Tensor(grad_input);
+        second_->grad_ = std::make_shared<Tensor>(grad_second);
     }
-
+    
     if (second_->grad_fn_ != nullptr) {
-        second_->grad_fn_->backward(grad_input);
+        second_->grad_fn_->backward(grad_second);
     }
 }

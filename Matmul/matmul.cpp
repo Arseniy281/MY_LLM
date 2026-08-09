@@ -13,11 +13,11 @@ Tensor MatMul(const Tensor& first, const Tensor& second) {
     size_t K = first_shape[1];
     size_t N = second_shape[1];
 
-    const float* first_data = first.data();
-    const float* second_data = second.data();
+    const float* first_data = first.RawData();
+    const float* second_data = second.RawData();
 
     Tensor tensor({M, N});
-    float* tensor_data = tensor.data();
+    float* tensor_data = tensor.RawData();
 
     if (first_shape[1] != second_shape[0]) {
         throw std::runtime_error("You cannot multiply this matrixes");
@@ -50,11 +50,11 @@ Tensor MatMulMultithreaded(const Tensor& first, const Tensor& second) {
     size_t K = first_shape[1];
     size_t N = second_shape[1];
 
-    const float* first_data = first.data();
-    const float* second_data = second.data();
+    const float* first_data = first.RawData();
+    const float* second_data = second.RawData();
 
     Tensor tensor({M, N});
-    float* tensor_data = tensor.data();
+    float* tensor_data = tensor.RawData();
 
     size_t num_threads = std::thread::hardware_concurrency();
     if (num_threads == 0) { num_threads = 4; }
@@ -107,11 +107,11 @@ Tensor MatMulLoopTiling(const Tensor& first, const Tensor& second, size_t block_
     size_t K = first_shape[1];
     size_t N = second_shape[1];
 
-    const float* first_data = first.data();
-    const float* second_data = second.data();
+    const float* first_data = first.RawData();
+    const float* second_data = second.RawData();
 
     Tensor tensor({M, N});
-    float* tensor_data = tensor.data();
+    float* tensor_data = tensor.RawData();
 
     for (size_t i_block = 0; i_block < M; i_block += block_size) {
         size_t i_end = std::min(i_block + block_size, M);

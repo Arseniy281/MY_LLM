@@ -4,13 +4,9 @@
 #include <vector>
 #include <memory>
 
-class AddOp : public Operation {
+class ReLU : public Operation {
 private:
-    std::shared_ptr<Tensor> first_;
-    std::shared_ptr<Tensor> second_;
-    std::vector<size_t> first_shape_;
-    std::vector<size_t> second_shape_;
-    std::vector<size_t> final_shape_;
+    std::shared_ptr<Tensor> parent_;
 public:
     std::shared_ptr<Tensor> forward(const std::vector<std::shared_ptr<Tensor>>& inputs) override;
     void backward(const Tensor& grad_output) override;

@@ -4,6 +4,7 @@
 #include <functional>
 #include <numeric>
 #include <random>
+#include <memory>
 #include "../Autograd/operation.h"
 
 static const float EPSILON = 1e-8f;
@@ -16,7 +17,7 @@ private:
     size_t size_ = 0;
     size_t rank_ = 0;
 
-    Tensor* grad_ = nullptr;
+    std::shared_ptr<Tensor> grad_ = nullptr;
     Operation* grad_fn_ = nullptr;
 
     size_t ComputeIndex(const std::vector<size_t>& indexes) const;
@@ -25,8 +26,11 @@ public:
     friend class AddOp;
     friend class SubOp;
     friend class MulOp;
+    friend class ReLU;
+    friend class Sigmoid;
     friend class SquareOp;
     friend class SumOp;
+    friend class TanhOp;
 
     explicit Tensor(std::vector<size_t> shape);
     Tensor(std::vector<size_t> shape, float k);
@@ -68,14 +72,17 @@ public:
     size_t GetSize() const;
     size_t GetRank() const;
     const std::vector<size_t>& GetShape() const;
-    float* data();
-    const float* data() const;
+    std::vector<float> Data();
+    const std::vector<float> Data() const;
+    float* RawData();
+    const float* RawData() const;
 
     void print() const;
     void PrintInfo() const;
 
-    Tensor* Grad() const;
+    std::shared_ptr<Tensor> Grad() const;
     void PrintGrad() const;
+    void ClearGrad();
     Operation* GradFn() const;
     void backward(const Tensor& grad_output = Tensor({1, 1}, 1.0f));
 };
