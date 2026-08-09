@@ -22,4 +22,23 @@ add_executable(xor_test
     xor_test.cpp
 )
 
+add_executable(log_test
+    ../Matmul/matmul.cpp 
+    ../Tensor/tensor.cpp
+    ../Tensor/tensor_ops.cpp
+    ../Tensor/tensor_print.cpp
+    ../Autograd/add_op.cpp
+    ../Autograd/mul_op.cpp
+    ../Autograd/square_op.cpp
+    ../Autograd/sub_op.cpp
+    ../Autograd/sum_op.cpp
+    ../Autograd/relu.cpp
+    ../Autograd/sigmoid.cpp
+    ../Autograd/tanh_op.cpp
+    mse_loss.cpp
+    linear_layer.cpp
+    log_test.cpp
+)
+
 target_include_directories(xor_test PRIVATE .)
+target_include_directories(log_test PRIVATE .)
