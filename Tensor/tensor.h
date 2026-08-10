@@ -31,6 +31,7 @@ public:
     friend class SquareOp;
     friend class SumOp;
     friend class TanhOp;
+    friend class EmbeddingLayer;
 
     explicit Tensor(std::vector<size_t> shape);
     Tensor(std::vector<size_t> shape, float k);
