@@ -11,4 +11,11 @@ add_executable(tensor_tests
     tensor_print.cpp
 )
 
-target_include_directories(tensor_tests PRIVATE .)
+add_executable(broadcast_test
+    broadcast_test.cpp 
+    tensor.cpp
+    tensor_ops.cpp
+    tensor_print.cpp
+)
+
+target_include_directories(broadcast_test PRIVATE .)
