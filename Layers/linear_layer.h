@@ -1,3 +1,4 @@
+#pragma once
 #include "../Autograd/add_op.h"
 #include "../Autograd/mul_op.h"
 #include "../Tensor/tensor.h"

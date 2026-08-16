@@ -2,39 +2,6 @@
 #include <vector>
 #include <thread>
 
-Tensor MatMul(const Tensor& first, const Tensor& second) {
-    if (first.GetRank() != 2 || second.GetRank() != 2) {
-        throw std::runtime_error("You can multiply only matrix");
-    }
-    const std::vector<size_t> first_shape = first.GetShape();
-    const std::vector<size_t> second_shape = second.GetShape();
-
-    size_t M = first_shape[0];
-    size_t K = first_shape[1];
-    size_t N = second_shape[1];
-
-    const float* first_data = first.RawData();
-    const float* second_data = second.RawData();
-
-    Tensor tensor({M, N});
-    float* tensor_data = tensor.RawData();
-
-    if (first_shape[1] != second_shape[0]) {
-        throw std::runtime_error("You cannot multiply this matrixes");
-    }
-
-    for (size_t i = 0; i < M; i++) {
-        for (size_t j = 0; j < N; j++) {
-            float val = 0;
-            for (size_t k = 0; k < K; k++) {
-                val += first_data[i * K + k] * second_data[k * N + j];
-            } 
-            tensor_data[i * N + j] = val;
-        }
-    }
-    return tensor;
-}
-
 Tensor MatMulMultithreaded(const Tensor& first, const Tensor& second) {
     if (first.GetRank() != 2 || second.GetRank() != 2) {
         throw std::runtime_error("You can multiply only matrix");
@@ -133,4 +100,96 @@ Tensor MatMulLoopTiling(const Tensor& first, const Tensor& second, size_t block_
         }
     }
     return tensor;
+}
+
+std::vector<size_t> AlignTensorsForMatMul(const std::vector<size_t>& small, const std::vector<size_t>& big) {
+    std::vector<size_t> batch1 = small;
+    batch1.pop_back();
+    batch1.pop_back();
+    
+    std::vector<size_t> batch2 = big;
+    batch2.pop_back();
+    batch2.pop_back();
+
+    std::vector<size_t> aligned_batch;
+    if (batch1.size() > batch2.size()) {
+        aligned_batch = batch1;
+    } else if (batch1.size() == batch2.size()) {
+        for (size_t i = 0; i < batch2.size(); i++) {
+            if (batch1[i] != batch2[i] && !(batch1[i] == 1 || batch2[i] == 1)) {
+                throw std::runtime_error("Incompatible batch shapes for MatMul");
+            }
+        }
+        aligned_batch = batch1;
+    } else {
+        std::vector<size_t> new_small;
+        size_t i = 0;
+        size_t j = 0;
+        while (j < batch2.size()) {
+            if (i < batch1.size() && (batch1[i] == batch2[j] || batch1[i] == 1)) {
+                new_small.push_back(batch1[i]);
+                i++;
+                j++;
+            } else {
+                new_small.push_back(1);
+                j++;
+            }
+        }
+        if (i != batch1.size() || j != batch2.size()) {
+            throw std::runtime_error("Incompatible batch shapes for MatMul");
+        }
+        aligned_batch = new_small;
+    }
+
+    std::vector<size_t> result = aligned_batch;
+    result.push_back(small[small.size() - 2]);
+    result.push_back(small[small.size() - 1]);
+    return result;
+}
+
+Tensor MatMul(const Tensor& A, const Tensor& B) {
+    std::vector<size_t> s1 = A.GetShape();
+    std::vector<size_t> s2 = B.GetShape();
+    
+    s1 = AlignTensorsForMatMul(s1, s2);
+    s2 = AlignTensorsForMatMul(s2, s1);
+    
+    if (s1[s1.size() - 1] != s2[s2.size() - 2]) {
+        throw std::runtime_error("Incompatible shapes for MatMul");
+    }
+    
+    std::vector<size_t> final_shape = Tensor::GetFinalShape(s1, s2);
+    final_shape[final_shape.size() - 2] = s1[s1.size() - 2];
+    final_shape[final_shape.size() - 1] = s2[s2.size() - 1];
+    
+    Tensor result(final_shape);
+    float* result_data = result.RawData();
+    size_t final_size = Tensor::GetFinalSize(final_shape);
+    
+    for (size_t i = 0; i < final_size; i++) {
+        std::vector<size_t> coords = Tensor::IndexToCoord(i, final_shape);
+        
+        size_t row = coords[coords.size() - 2];
+        size_t col = coords[coords.size() - 1];
+        
+        std::vector<size_t> coords_A = coords;
+        std::vector<size_t> coords_B = coords;
+        
+        size_t k_dim = s1.back();
+        
+        float sum = 0.0f;
+        for (size_t k = 0; k < k_dim; k++) {
+            coords_A[coords_A.size() - 2] = row;
+            coords_A[coords_A.size() - 1] = k;
+            
+            coords_B[coords_B.size() - 2] = k;
+            coords_B[coords_B.size() - 1] = col;
+            size_t idx_A = Tensor::BroadcastIndex(s1, final_shape, Tensor::CoordToIndex(coords_A, final_shape));
+            size_t idx_B = Tensor::BroadcastIndex(s2, final_shape, Tensor::CoordToIndex(coords_B, final_shape));
+            sum += A.RawData()[idx_A] * B.RawData()[idx_B];
+        }
+        
+        result_data[i] = sum;
+    }
+    return result;
 }

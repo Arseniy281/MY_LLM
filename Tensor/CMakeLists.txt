@@ -18,4 +18,5 @@ add_executable(broadcast_test
     tensor_print.cpp
 )
 
+target_include_directories(tensor_tests PRIVATE .)
 target_include_directories(broadcast_test PRIVATE .)

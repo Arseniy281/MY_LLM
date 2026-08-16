@@ -81,19 +81,6 @@ const auto Tensor::GetIter(const std::vector<size_t>& indexes) const {
     return data_.begin() + ComputeIndex(indexes);
 }
 
-Tensor Tensor::Transpose() {
-    if (rank_ != 2) {
-        throw std::runtime_error("You can transpose only matrix");
-    }
-    Tensor tensor({shape_[1], shape_[0]});
-    for (size_t i = 0; i < shape_[0]; i++) {
-        for (size_t j = 0; j < shape_[1]; j++) {
-            tensor.data_[tensor.ComputeIndex({j, i})] = data_[ComputeIndex({i, j})];
-        }
-    }
-    return tensor;
-}
-
 void Tensor::Reshape(std::vector<size_t> new_shape) {
     size_t first_size = std::accumulate(shape_.begin(), 
         shape_.end(), 1, std::multiplies<size_t>());
@@ -165,4 +152,29 @@ void Tensor::backward(const Tensor& grad_output) {
         throw std::runtime_error("This tensor has no grad_fn");
     }
     grad_fn_->backward(grad_output);
+}
+
+Tensor Tensor::SumAxis(int axis) {
+    if (axis == 0) {
+        Tensor result({1, GetShape()[1]});
+        for (size_t j = 0; j < GetShape()[1]; j++) {
+            float sum = 0.0f;
+            for (size_t i = 0; i < GetShape()[0]; i++) {
+                sum += at({i, j});
+            }
+            result.at({0, j}) = sum;
+        }
+        return result;
+    } else if (axis == 1) {
+        Tensor result({GetShape()[0], 1});
+        for (size_t i = 0; i < GetShape()[0]; i++) {
+            float sum = 0.0f;
+            for (size_t j = 0; j < GetShape()[1]; j++) {
+                sum += at({i, j});
+            }
+            result.at({i, 0}) = sum;
+        }
+        return result;
+    }
+    throw std::runtime_error("SumAxis only supports axis 0 and 1");
 }

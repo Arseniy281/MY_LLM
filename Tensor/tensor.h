@@ -21,6 +21,7 @@ private:
     Operation* grad_fn_ = nullptr;
 
     size_t ComputeIndex(const std::vector<size_t>& indexes) const;
+    static void CheckBeforeConcatenate(const std::vector<Tensor>& head_outputs, size_t axis = 0);
 public:
 
     friend class AddOp;
@@ -48,6 +49,9 @@ public:
     auto GetIter(const std::vector<size_t>& indexes);
     const auto GetIter(const std::vector<size_t>& indexes) const;
 
+    static std::vector<size_t> IndexToCoord(size_t ind, const std::vector<size_t>& shape);
+    static size_t CoordToIndex(const std::vector<size_t>& coord, const std::vector<size_t>& shape);
+
     Tensor operator+(const Tensor& other) const;
     Tensor& operator+=(const Tensor& other);
     Tensor operator-(const Tensor& other) const;
@@ -66,6 +70,11 @@ public:
     Tensor operator/(const float num) const;
     Tensor& operator/=(const float num);
     Tensor operator-() const;
+    static Tensor Concatenate(const std::vector<Tensor>& head_outputs, size_t axis = 0);
+    static size_t BroadcastIndex(const std::vector<size_t>& real_shape, const std::vector<size_t>& final_shape, size_t ind);
+    static std::vector<size_t> AlignTensors(const std::vector<size_t>& small, const std::vector<size_t>& big);
+    static std::vector<size_t> GetFinalShape(const std::vector<size_t>& first, const std::vector<size_t>& second);
+    static size_t GetFinalSize(const std::vector<size_t>& final_shape);
 
     Tensor Transpose();
     void Reshape(std::vector<size_t> new_shape);
@@ -86,4 +95,6 @@ public:
     void ClearGrad();
     Operation* GradFn() const;
     void backward(const Tensor& grad_output = Tensor({1, 1}, 1.0f));
+
+    Tensor SumAxis(int axis);
 };
