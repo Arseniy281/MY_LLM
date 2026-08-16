@@ -16,6 +16,7 @@ add_executable(attention_test
     ../Autograd/sum_op.cpp
     ../Autograd/relu.cpp
     ../Autograd/sigmoid.cpp
+    rope.cpp
     ../Layers/linear_layer.cpp
     attention.cpp 
     softmax.cpp

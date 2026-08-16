@@ -1,10 +1,12 @@
 #include "../Layers/linear_layer.h"
 #include "../Matmul/matmul.h"
 #include "../Tensor/tensor.h"
+#include "rope.h"
 #include "attention.h"
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <cmath>
 
 Attention::Attention(size_t embed_dim, size_t num_heads) 
     : embed_dim_(embed_dim), num_heads_(num_heads) {
@@ -14,7 +16,7 @@ Attention::Attention(size_t embed_dim, size_t num_heads)
     k_layers_.reserve(num_heads_);
     v_layers_.reserve(num_heads_);
     
-    for (size_t i = 0; i < num_heads_; ++i) {
+    for (size_t i = 0; i < num_heads_; i++) {
         q_layers_.emplace_back(embed_dim_, head_dim_);
         k_layers_.emplace_back(embed_dim_, head_dim_);
         v_layers_.emplace_back(embed_dim_, head_dim_);
@@ -50,6 +52,10 @@ Tensor Attention::forward(const std::shared_ptr<Tensor>& x) {
         Q.emplace_back(q_layers_[i].forward(x));
         K.emplace_back(k_layers_[i].forward(x));
         V.emplace_back(v_layers_[i].forward(x));
+    }
+    for (size_t i = 0; i < num_heads_; i++) {
+        Q[i] = std::make_shared<Tensor>(RoPE(*Q[i]));
+        K[i] = std::make_shared<Tensor>(RoPE(*K[i]));
     }
     std::vector<Tensor> head_outputs;
     head_outputs.reserve(num_heads_);
