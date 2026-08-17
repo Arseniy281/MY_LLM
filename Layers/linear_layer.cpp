@@ -28,8 +28,24 @@ void LinearLayer::Update(float lr) {
 }
 
 std::shared_ptr<Tensor> LinearLayer::forward(const std::shared_ptr<Tensor>& x) {
-    auto mult = mul_op_.forward({x, W_});
-    auto added = add_op_.forward({mult, b_});
-        
-    return added;
+    saved_mult_ = mul_op_.forward({x, W_});
+    saved_added_ = add_op_.forward({saved_mult_, b_});
+    return saved_added_;
+}
+
+Tensor LinearLayer::backward(const Tensor& grad_output) {
+    if (saved_added_->GradFn() != nullptr) {
+        saved_added_->GradFn()->backward(grad_output);
+    }
+
+    if (saved_mult_->Grad() == nullptr) {
+        return Tensor(saved_mult_->GetShape(), 0.0f);
+    }
+    Tensor grad_x;
+    grad_x = *saved_mult_->Grad();
+    if (saved_mult_->GradFn() != nullptr) {
+        saved_mult_->GradFn()->backward(grad_x);
+    }
+
+    return grad_x;
 }

@@ -10,5 +10,5 @@ private:
     std::shared_ptr<Tensor> second_;
 public:
     std::shared_ptr<Tensor> forward(const std::vector<std::shared_ptr<Tensor>>& inputs) override;
-    void backward(const Tensor& grad_output) override;
+    Tensor backward(const Tensor& grad_output) override;
 };

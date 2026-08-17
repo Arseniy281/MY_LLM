@@ -8,28 +8,30 @@ std::shared_ptr<Tensor> SubOp::forward(const std::vector<std::shared_ptr<Tensor>
     second_ = inputs[1];
     
     auto result = std::make_shared<Tensor>(*first_ - *second_);
-    result->grad_fn_ = this;
+    result->SetGradFn(this);
     return result;
 }
 
-void SubOp::backward(const Tensor& grad_output) {
-    if (first_->grad_ != nullptr) {
-        *first_->grad_ += grad_output;
+Tensor SubOp::backward(const Tensor& grad_output) {
+    if (first_->Grad() != nullptr) {
+        *first_->Grad() += grad_output;
     } else {
-        first_->grad_ = std::make_shared<Tensor>(grad_output);
+        first_->Grad() = std::make_shared<Tensor>(grad_output);
     }
 
-    if (first_->grad_fn_ != nullptr) {
-        first_->grad_fn_->backward(grad_output);
+    if (first_->GradFn() != nullptr) {
+        first_->GradFn()->backward(grad_output);
     }
 
-    if (second_->grad_ != nullptr) {
-        *second_->grad_ -= grad_output;
+    if (second_->Grad() != nullptr) {
+        *second_->Grad() -= grad_output;
     } else {
-        second_->grad_ = std::make_shared<Tensor>(-grad_output);
+        second_->Grad() = std::make_shared<Tensor>(-grad_output);
     }
 
-    if (second_->grad_fn_ != nullptr) {
-        second_->grad_fn_->backward(-grad_output);
+    if (second_->GradFn() != nullptr) {
+        second_->GradFn()->backward(-grad_output);
     }
+
+    return grad_output;
 }

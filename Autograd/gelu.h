@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-class ReLU : public Operation {
+class Gelu : public Operation {
 private:
     std::shared_ptr<Tensor> parent_;
 public:

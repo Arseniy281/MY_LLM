@@ -15,7 +15,7 @@ public:
     EmbeddingLayer(size_t vocab_size, size_t embedding_dim);
 
     std::shared_ptr<Tensor> forward(const std::vector<std::shared_ptr<Tensor>>& indices) override;
-    void backward(const Tensor& grad_output);
+    Tensor backward(const Tensor& grad_output);
 
     void ClearGrad();
     void Update(float lr);

@@ -14,20 +14,22 @@ std::shared_ptr<Tensor> SumOp::forward(const std::vector<std::shared_ptr<Tensor>
     }
     
     auto result = std::make_shared<Tensor>(Tensor({1, 1}, total));
-    result->grad_fn_ = this;
+    result->SetGradFn(this);
     return result;
 }
 
-void SumOp::backward(const Tensor& grad_output) {
+Tensor SumOp::backward(const Tensor& grad_output) {
     Tensor grad_input(parent_->GetShape(), grad_output.RawData()[0]);
     
-    if (parent_->grad_ != nullptr) {
-        *parent_->grad_ += grad_input;
+    if (parent_->Grad() != nullptr) {
+        *parent_->Grad() += grad_input;
     } else {
-        parent_->grad_ = std::make_shared<Tensor>(grad_input);
+        parent_->Grad() = std::make_shared<Tensor>(grad_input);
     }
     
-    if (parent_->grad_fn_ != nullptr) {
-        parent_->grad_fn_->backward(grad_input);
+    if (parent_->GradFn() != nullptr) {
+        parent_->GradFn()->backward(grad_input);
     }
+
+    return grad_input;
 }

@@ -15,11 +15,11 @@ std::shared_ptr<Tensor> Sigmoid::forward(const std::vector<std::shared_ptr<Tenso
     }
     
     auto result = std::make_shared<Tensor>(parent_->GetShape(), new_data);
-    result->grad_fn_ = this;
+    result->SetGradFn(this);
     return result;
 }
 
-void Sigmoid::backward(const Tensor& grad_output) {
+Tensor Sigmoid::backward(const Tensor& grad_output) {
     const float* input_data = parent_->RawData();
     const float* grad_data = grad_output.RawData();
     size_t size = parent_->GetSize();
@@ -38,13 +38,15 @@ void Sigmoid::backward(const Tensor& grad_output) {
     
     Tensor grad_input(parent_->GetShape(), grad_input_data);
 
-    if (parent_->grad_ != nullptr) {
-        *parent_->grad_ += grad_input;
+    if (parent_->Grad() != nullptr) {
+        *parent_->Grad() += grad_input;
     } else {
-        parent_->grad_ = std::make_shared<Tensor>(grad_input);
+        parent_->Grad() = std::make_shared<Tensor>(grad_input);
     }
 
-    if (parent_->grad_fn_ != nullptr) {
-        parent_->grad_fn_->backward(grad_input);
+    if (parent_->GradFn() != nullptr) {
+        parent_->GradFn()->backward(grad_input);
     }
+
+    return grad_input;
 }

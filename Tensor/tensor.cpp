@@ -147,6 +147,12 @@ Operation* Tensor::GradFn() const {
     return grad_fn_;
 }
 
+void Tensor::SetGradFn(Operation* op) {
+    if (op != nullptr) {
+        grad_fn_ = op;
+    }
+}
+
 void Tensor::backward(const Tensor& grad_output) {
     if (grad_fn_ == nullptr) {
         throw std::runtime_error("This tensor has no grad_fn");
@@ -164,9 +170,8 @@ Tensor Tensor::SumAxis(int axis) {
     for (size_t i = 0; i < size_; i++) {
         std::vector<size_t> coord = IndexToCoord(i, shape_);
         std::vector<size_t> result_coord = coord;
-        result_coord[axis] = 0;
-        size_t ind = CoordToIndex(result_coord, result.shape_);
-        result.data_[ind] += data_[i];
+        result_coord.erase(result_coord.begin() + axis);
+        result.at(result_coord) += data_[i];
     }
     return result;
 }

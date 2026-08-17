@@ -161,7 +161,7 @@ Tensor MatMul(const Tensor& A, const Tensor& B) {
     std::vector<size_t> final_shape = Tensor::GetFinalShape(s1, s2);
     final_shape[final_shape.size() - 2] = s1[s1.size() - 2];
     final_shape[final_shape.size() - 1] = s2[s2.size() - 1];
-    
+
     Tensor result(final_shape);
     float* result_data = result.RawData();
     size_t final_size = Tensor::GetFinalSize(final_shape);

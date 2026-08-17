@@ -13,5 +13,5 @@ private:
     std::vector<size_t> final_shape_;
 public:
     std::shared_ptr<Tensor> forward(const std::vector<std::shared_ptr<Tensor>>& inputs) override;
-    void backward(const Tensor& grad_output) override;
+    Tensor backward(const Tensor& grad_output) override;
 };

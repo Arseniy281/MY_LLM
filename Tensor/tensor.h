@@ -24,16 +24,6 @@ private:
     static void CheckBeforeConcatenate(const std::vector<Tensor>& head_outputs, size_t axis = 0);
 public:
 
-    friend class AddOp;
-    friend class SubOp;
-    friend class MulOp;
-    friend class ReLU;
-    friend class Sigmoid;
-    friend class SquareOp;
-    friend class SumOp;
-    friend class TanhOp;
-    friend class EmbeddingLayer;
-
     explicit Tensor(std::vector<size_t> shape);
     Tensor(std::vector<size_t> shape, float k);
     static Tensor Random(std::vector<size_t> shape, float min = 0.0f, float max = 1.0f);
@@ -94,6 +84,7 @@ public:
     void PrintGrad() const;
     void ClearGrad();
     Operation* GradFn() const;
+    void SetGradFn(Operation* op);
     void backward(const Tensor& grad_output = Tensor({1, 1}, 1.0f));
 
     Tensor SumAxis(int axis);

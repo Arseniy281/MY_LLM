@@ -17,11 +17,11 @@ std::shared_ptr<Tensor> EmbeddingLayer::forward(const std::vector<std::shared_pt
         data.insert(data.end(), indices_data + idx * embedding_dim_, indices_data + (idx + 1) * embedding_dim_);
     }
     auto output = std::make_shared<Tensor>(Tensor({indices_count, embedding_dim_}, data));
-    output->grad_fn_ = this;
+    output->SetGradFn(this);
     return output;
 }
 
-void EmbeddingLayer::backward(const Tensor& grad_output) {
+Tensor EmbeddingLayer::backward(const Tensor& grad_output) {
     size_t batch_size = indices_->GetSize();
     for (size_t i = 0; i < batch_size; i++) {
         size_t idx = indices_->at(i);
@@ -30,11 +30,13 @@ void EmbeddingLayer::backward(const Tensor& grad_output) {
         }
     }
 
-    if (indices_->grad_ != nullptr) {
-        *indices_->grad_ += grad_output;
+    if (indices_->Grad() != nullptr) {
+        *indices_->Grad() += grad_output;
     } else {
-        indices_->grad_ = std::make_shared<Tensor>(grad_output);
+        indices_->Grad() = std::make_shared<Tensor>(grad_output);
     }
+
+    return grad_output;
 }
 
 void EmbeddingLayer::ClearGrad() {
