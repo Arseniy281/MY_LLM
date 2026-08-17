@@ -43,8 +43,8 @@ public:
 
     float& at(size_t index);
     const float& at(size_t index) const;
-    float& at(std::vector<size_t> indexes);
-    const float& at(std::vector<size_t> indexes) const;
+    float& at(const std::vector<size_t>& indexes);
+    const float& at(const std::vector<size_t>& indexes) const;
     void Set(std::vector<size_t> indexes, float value);
     auto GetIter(const std::vector<size_t>& indexes);
     const auto GetIter(const std::vector<size_t>& indexes) const;
@@ -97,4 +97,7 @@ public:
     void backward(const Tensor& grad_output = Tensor({1, 1}, 1.0f));
 
     Tensor SumAxis(int axis);
+    Tensor Mean(int axis);
 };
+
+Tensor operator/(float scalar, const Tensor& t);

@@ -61,11 +61,11 @@ const float& Tensor::at(size_t index) const {
     return data_[index];
 }
 
-float& Tensor::at(std::vector<size_t> indexes) {
+float& Tensor::at(const std::vector<size_t>& indexes) {
     return data_[ComputeIndex(indexes)];
 }
 
-const float& Tensor::at(std::vector<size_t> indexes) const {
+const float& Tensor::at(const std::vector<size_t>& indexes) const {
     return data_[ComputeIndex(indexes)];
 }
 
@@ -155,26 +155,25 @@ void Tensor::backward(const Tensor& grad_output) {
 }
 
 Tensor Tensor::SumAxis(int axis) {
-    if (axis == 0) {
-        Tensor result({1, GetShape()[1]});
-        for (size_t j = 0; j < GetShape()[1]; j++) {
-            float sum = 0.0f;
-            for (size_t i = 0; i < GetShape()[0]; i++) {
-                sum += at({i, j});
-            }
-            result.at({0, j}) = sum;
-        }
-        return result;
-    } else if (axis == 1) {
-        Tensor result({GetShape()[0], 1});
-        for (size_t i = 0; i < GetShape()[0]; i++) {
-            float sum = 0.0f;
-            for (size_t j = 0; j < GetShape()[1]; j++) {
-                sum += at({i, j});
-            }
-            result.at({i, 0}) = sum;
-        }
-        return result;
+    if (axis >= rank_) {
+        throw std::runtime_error("Axis is bigger, than rank");
     }
-    throw std::runtime_error("SumAxis only supports axis 0 and 1");
+    std::vector<size_t> result_shape = shape_;
+    result_shape.erase(result_shape.begin() + axis);
+    Tensor result(result_shape, 0.0f);
+    for (size_t i = 0; i < size_; i++) {
+        std::vector<size_t> coord = IndexToCoord(i, shape_);
+        std::vector<size_t> result_coord = coord;
+        result_coord[axis] = 0;
+        size_t ind = CoordToIndex(result_coord, result.shape_);
+        result.data_[ind] += data_[i];
+    }
+    return result;
+}
+
+Tensor Tensor::Mean(int axis) {
+    size_t dim = shape_[axis];
+    Tensor result = SumAxis(axis);
+    result /= dim;
+    return result;
 }

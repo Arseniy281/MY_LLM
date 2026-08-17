@@ -111,73 +111,90 @@ Tensor& Tensor::operator+=(const Tensor& other) {
 }
 
 Tensor Tensor::operator-(const Tensor& other) const {
-    if (shape_ != other.shape_) {
-        throw std::runtime_error("Different shapes for subtraction"); 
+    std::vector<size_t> s1 = shape_;
+    std::vector<size_t> s2 = other.GetShape();
+    s1 = AlignTensors(s1, s2);
+    s2 = (AlignTensors(s2, s1));
+
+    const float* data_1 = RawData();
+    const float* data_2 = other.RawData();
+
+    std::vector<size_t> final_shape = GetFinalShape(s1, s2);
+    size_t final_size = GetFinalSize(final_shape);
+
+    std::vector<float> final_data(final_size);
+    for (size_t i = 0; i < final_size; i++) {
+        final_data[i] = data_1[BroadcastIndex(s1, final_shape, i)] 
+                        - data_2[BroadcastIndex(s2, final_shape, i)];
     }
-    Tensor tensor(shape_);
-    for (size_t i = 0; i < size_; i++) {
-        tensor.data_[i] = data_[i] - other.data_[i];
-    }
-    return tensor;
+
+    Tensor result(final_shape, final_data);
+    return result;
 }
 
 Tensor& Tensor::operator-=(const Tensor& other) {
-    if (shape_ != other.shape_) {
-        throw std::runtime_error("Different shapes for subtraction"); 
-    }
-    for (size_t i = 0; i < size_; i++) {
-        data_[i] -= other.data_[i];
-    }
+    *this = *this - other;
     return *this;
 }
 
 Tensor Tensor::operator*(const Tensor& other) const {
-    if (shape_ != other.shape_) {
-        throw std::runtime_error("Different shapes for multiplication"); 
+    std::vector<size_t> s1 = shape_;
+    std::vector<size_t> s2 = other.GetShape();
+    s1 = AlignTensors(s1, s2);
+    s2 = (AlignTensors(s2, s1));
+
+    const float* data_1 = RawData();
+    const float* data_2 = other.RawData();
+
+    std::vector<size_t> final_shape = GetFinalShape(s1, s2);
+    size_t final_size = GetFinalSize(final_shape);
+
+    std::vector<float> final_data(final_size);
+    for (size_t i = 0; i < final_size; i++) {
+        final_data[i] = data_1[BroadcastIndex(s1, final_shape, i)] 
+                        * data_2[BroadcastIndex(s2, final_shape, i)];
     }
-    Tensor tensor(shape_);
-    for (size_t i = 0; i < size_; i++) {
-        tensor.data_[i] = data_[i] * other.data_[i];
-    }
-    return tensor;
+
+    Tensor result(final_shape, final_data);
+    return result;
 }
 
 Tensor& Tensor::operator*=(const Tensor& other) {
-    if (shape_ != other.shape_) {
-        throw std::runtime_error("Different shapes for multiplication"); 
-    }
-    for (size_t i = 0; i < size_; i++) {
-        data_[i] *= other.data_[i];
-    }
+    *this = *this * other;
     return *this;
 }
 
 Tensor Tensor::operator/(const Tensor& other) const {
-    if (shape_ != other.shape_) {
-        throw std::runtime_error("Different shapes for division"); 
-    }
-    Tensor tensor(shape_);
-    for (size_t i = 0; i < size_; i++) {
-        if (other.data_[i] == 0) {
-            tensor.data_[i] = data_[i] / (other.data_[i] + EPSILON);
+    std::vector<size_t> s1 = shape_;
+    std::vector<size_t> s2 = other.GetShape();
+    s1 = AlignTensors(s1, s2);
+    s2 = (AlignTensors(s2, s1));
+
+    const float* data_1 = RawData();
+    const float* data_2 = other.RawData();
+
+    std::vector<size_t> final_shape = GetFinalShape(s1, s2);
+    size_t final_size = GetFinalSize(final_shape);
+
+    std::vector<float> final_data(final_size);
+    for (size_t i = 0; i < final_size; i++) {
+        size_t idx1 = BroadcastIndex(s1, final_shape, i);
+        size_t idx2 = BroadcastIndex(s2, final_shape, i);
+        
+        float divisor = data_2[idx2];
+        if (divisor == 0.0f) {
+            final_data[i] = 0.0f;
         } else {
-            tensor.data_[i] = data_[i] / other.data_[i];
+            final_data[i] = data_1[idx1] / divisor;
         }
     }
-    return tensor;
+
+    Tensor result(final_shape, final_data);
+    return result;
 }
 
 Tensor& Tensor::operator/=(const Tensor& other) {
-    if (shape_ != other.shape_) {
-        throw std::runtime_error("Different shapes for division"); 
-    }
-    for (size_t i = 0; i < size_; i++) {
-        if (other.data_[i] == 0) {
-            data_[i] /= (other.data_[i] + EPSILON);
-        } else {
-            data_[i] /= other.data_[i];
-        }
-    }
+    *this = *this / other;
     return *this;
 }
 
@@ -322,4 +339,13 @@ Tensor Tensor::Transpose() {
         }
     }
     return tensor;
+}
+
+
+Tensor operator/(float scalar, const Tensor& t) {
+    Tensor result(t.GetShape());
+    for (size_t i = 0; i < t.GetSize(); i++) {
+        result.RawData()[i] = scalar / t.RawData()[i];
+    }
+    return result;
 }
