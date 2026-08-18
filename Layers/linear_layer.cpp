@@ -27,8 +27,9 @@ void LinearLayer::Update(float lr) {
     }
 }
 
-std::shared_ptr<Tensor> LinearLayer::forward(const std::shared_ptr<Tensor>& x) {
-    saved_mult_ = mul_op_.forward({x, W_});
+std::shared_ptr<Tensor> LinearLayer::forward(const Tensor& x) {
+    auto x_ptr = std::make_shared<Tensor>(x);
+    saved_mult_ = mul_op_.forward({x_ptr, W_});
     saved_added_ = add_op_.forward({saved_mult_, b_});
     return saved_added_;
 }
@@ -38,13 +39,13 @@ Tensor LinearLayer::backward(const Tensor& grad_output) {
         saved_added_->GradFn()->backward(grad_output);
     }
 
-    if (saved_mult_->Grad() == nullptr) {
-        return Tensor(saved_mult_->GetShape(), 0.0f);
-    }
     Tensor grad_x;
-    grad_x = *saved_mult_->Grad();
-    if (saved_mult_->GradFn() != nullptr) {
-        saved_mult_->GradFn()->backward(grad_x);
+    if (saved_mult_->GradFn() != nullptr && saved_mult_->Grad() != nullptr) {
+        grad_x = saved_mult_->GradFn()->backward(*saved_mult_->Grad());
+    } else {
+        std::vector<size_t> input_shape = saved_mult_->GetShape();
+        input_shape.back() = input_size_;
+        grad_x = Tensor(input_shape, 0.0f);
     }
 
     return grad_x;

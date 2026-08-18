@@ -18,7 +18,7 @@ std::vector<size_t> Tensor::AlignTensors(const std::vector<size_t>& small, const
         size_t i = 0;
         size_t j = 0;
         while (j < big.size()) {
-            if (small[i] == big[j] || small[i] == 1) {
+            if (i < small.size() && (small[i] == big[j] || small[i] == 1)) {
                 new_small.push_back(small[i]);
                 i++;
                 j++;

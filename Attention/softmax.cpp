@@ -1,4 +1,4 @@
-#include <softmax.h>
+#include "softmax.h"
 #include <cmath>
 
 Tensor Softmax::forward(const Tensor& matrix) {

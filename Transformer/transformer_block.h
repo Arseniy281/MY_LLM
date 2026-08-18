@@ -1,0 +1,28 @@
+#pragma once
+
+#include "../Normalization/rms_norm.h"
+#include "../Attention/attention.h"
+#include "../Layers/feed_forward.h"
+
+class TransformerBlock {
+private:
+    RMSNorm rms_norm_1_;
+    MultiHeadAttention attention_;
+    RMSNorm rms_norm_2_;
+    FeedForward feed_forward_;
+
+    Tensor saved_residual_1_;
+    Tensor saved_residual_2_;
+    Tensor saved_norm_1_input_;
+    Tensor saved_attention_input_;
+    Tensor saved_norm_2_input_;
+    Tensor saved_ffn_input_;
+public:
+    TransformerBlock(size_t embed_dim, size_t num_heads, size_t hidden_dim);
+    
+    Tensor forward(const Tensor& x);
+    Tensor backward(const Tensor& grad_output);
+
+    void Update(float lr);
+    void ClearGrad();
+};

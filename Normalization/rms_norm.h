@@ -12,4 +12,6 @@ public:
     Tensor backward(const Tensor& grad_output);
 
     Tensor GetGamma();
+    void Update(float lr);
+    void ClearGrad();
 };

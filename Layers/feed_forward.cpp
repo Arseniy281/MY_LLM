@@ -7,11 +7,9 @@ FeedForward::FeedForward(size_t embed_dim, size_t hidden_dim) {
 }
 
 Tensor FeedForward::forward(const Tensor& x) {
-    auto x_ptr = std::make_shared<Tensor>(x);
-
-    auto hidden = fc1_.forward(x_ptr);
+    auto hidden = fc1_.forward(x);
     auto activated = gelu_.forward({hidden});
-    auto output = fc2_.forward(activated);
+    auto output = fc2_.forward(*activated);
     return *output;
 }
 

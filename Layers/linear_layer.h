@@ -22,6 +22,6 @@ public:
     void ClearGrad();
     void Update(float lr);
 
-    std::shared_ptr<Tensor> forward(const std::shared_ptr<Tensor>& x);
+    std::shared_ptr<Tensor> forward(const Tensor& x);
     Tensor backward(const Tensor& grad_output);
 };

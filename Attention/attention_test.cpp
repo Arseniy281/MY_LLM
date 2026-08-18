@@ -37,9 +37,8 @@ int main() {
 
     // 2. Создаём Attention (без маски)
     std::cout << "Test 1: Attention without mask\n";
-    Attention attn(embed_dim, num_heads);
-    auto x_ptr = std::make_shared<Tensor>(x);
-    Tensor output = attn.forward(x_ptr);
+    MultiHeadAttention attn(embed_dim, num_heads);
+    Tensor output = attn.forward(x);
 
     print_shape("output", output);
     std::cout << "Output shape matches input: "

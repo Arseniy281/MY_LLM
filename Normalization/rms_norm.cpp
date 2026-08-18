@@ -51,3 +51,13 @@ Tensor RMSNorm::backward(const Tensor& grad_output) {
 Tensor RMSNorm::GetGamma() {
     return gamma_;
 }
+
+void RMSNorm::Update(float lr) {
+    if (gamma_.Grad() != nullptr) {
+        gamma_ = gamma_ - (*gamma_.Grad()) * lr;
+    }
+}
+
+void RMSNorm::ClearGrad() {
+    gamma_.ClearGrad();
+}
