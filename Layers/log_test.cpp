@@ -18,9 +18,9 @@ public:
     LogModel() : layer1(1, 8), layer2(8, 1) {}
 
     std::shared_ptr<Tensor> forward(const std::shared_ptr<Tensor>& x) {
-        auto z1 = layer1.forward(x);
+        auto z1 = layer1.forward(*x);
         auto a1 = tanh1.forward({z1});
-        auto y_pred = layer2.forward(a1);
+        auto y_pred = layer2.forward(*a1);
         return y_pred;
     }
 

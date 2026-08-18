@@ -8,6 +8,7 @@ private:
     std::vector<TransformerBlock> blocks_;
     size_t blocks_count_;
 public:
+    Transformer() = default;
     Transformer(size_t n, size_t embed_dim,
         size_t num_heads, size_t hidden_dim);
 

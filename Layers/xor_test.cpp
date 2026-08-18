@@ -19,9 +19,9 @@ public:
     XORModel() : layer1(2, 4), layer2(4, 1) {}
 
     std::shared_ptr<Tensor> forward(const std::shared_ptr<Tensor>& x) {
-        auto z1 = layer1.forward(x);
+        auto z1 = layer1.forward(*x);
         auto a1 = tanh1.forward({z1});
-        auto z2 = layer2.forward(a1);
+        auto z2 = layer2.forward(*a1);
         auto y_pred = tanh2.forward({z2});
         
         z1_list.push_back(z1);
