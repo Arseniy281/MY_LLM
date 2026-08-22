@@ -24,7 +24,7 @@ Tensor RMSNorm::forward(const Tensor& x) {
                 rms += val * val;
             }
             rms /= embed_dim;
-            rms = std::sqrt(rms);
+            rms = std::sqrt(rms + 1e-6f);
             saved_rms_.at({b, pos, 0}) = rms;
             for (size_t i = 0; i < embed_dim; i++) {
                 result.at({b, pos, i}) /= rms;
@@ -41,8 +41,10 @@ Tensor RMSNorm::backward(const Tensor& grad_output) {
     while (grad_gamma.GetRank() > 1) {
         grad_gamma = grad_gamma.SumAxis(0);
     }
+
+    gamma_.AddGrad(grad_gamma);
     Tensor grad_x_norm = grad_output * gamma_;
-    Tensor mean = (grad_x_norm * saved_x_norm_);
+    Tensor mean = grad_x_norm * saved_x_norm_;
     mean = mean.Mean(mean.GetShape().size() - 1);
     Tensor grad_x = (1.0f / saved_rms_) * (grad_x_norm - saved_x_norm_ * mean);
     return grad_x;
@@ -60,4 +62,19 @@ void RMSNorm::Update(float lr) {
 
 void RMSNorm::ClearGrad() {
     gamma_.ClearGrad();
+}
+
+void RMSNorm::ScaleGrad(float factor) {
+    if (gamma_.Grad() == nullptr) return;
+    for (size_t i = 0; i < gamma_.Grad()->GetSize(); i++) {
+        gamma_.Grad()->at(i) *= factor;
+    }
+}
+
+void RMSNorm::Save(const std::string& path) const {
+    gamma_.SaveTensor(path);
+}
+
+void RMSNorm::Load(const std::string& path) {
+    gamma_ = Tensor::LoadTensor(path);
 }

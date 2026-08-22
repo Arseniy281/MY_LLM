@@ -1,5 +1,9 @@
 #include "feed_forward.h"
 #include <memory>
+#include <string>
+#include <sys/stat.h>
+#include <errno.h> 
+
 
 FeedForward::FeedForward(size_t embed_dim, size_t hidden_dim) {
     fc1_ = LinearLayer(embed_dim, hidden_dim);
@@ -29,4 +33,23 @@ void FeedForward::Update(float lr) {
 void FeedForward::ClearGrad() {
     fc1_.ClearGrad();
     fc2_.ClearGrad();
+}
+
+void FeedForward::ScaleGrad(float factor) {
+    fc1_.ScaleGrad(factor);
+    fc2_.ScaleGrad(factor);
+}
+
+void FeedForward::Save(const std::string& folder) const {
+    if (mkdir(folder.c_str(), 0777) != 0 && errno != EEXIST) {
+        throw std::runtime_error("Cannot create directory: " + folder);
+    }
+
+    fc1_.Save(folder, "fc1");
+    fc2_.Save(folder, "fc2");
+}
+
+void FeedForward::Load(const std::string& folder) {
+    fc1_.Load(folder, "fc1");
+    fc2_.Load(folder, "fc2");
 }

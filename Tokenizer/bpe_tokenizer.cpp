@@ -29,9 +29,16 @@ std::vector<std::string> BPETokenizer::Split(const std::string& str) {
 }
 
 BPETokenizer::BPETokenizer() {
-    for (const auto& symbol : "abcdefghiJklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?.,@#%&*-+= ") {
+    for (const auto& symbol :
+         "abcdefghijklmnopqrstuvwxyz"
+         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+         "0123456789"
+         "!?.,@#%&*-+= ") {
+
         AddToken(std::string(1, symbol));
     }
+
+    AddToken("\n");
     AddToken("<UNK>");
 }
 
@@ -118,21 +125,22 @@ void BPETokenizer::Load(const std::string& filename) {
 
 
 std::vector<size_t> BPETokenizer::Encode(const std::string& str) {
-    std::vector<std::string> words = Split(str);
-    std::vector<size_t> ids = {};
-    for (const auto& word : words) {
-        size_t i = 0;
-        while (i < word.size()) {
-            std::string prefix = trie.LongestToken(word, i);
-            if (!prefix.empty()) {
-                ids.push_back(token_to_id_[prefix]);
-                i += prefix.size();
-            } else {
-                ids.push_back(token_to_id_["<UNK>"]);
-                i++;
-            }
+    std::vector<size_t> ids;
+
+    size_t i = 0;
+
+    while (i < str.size()) {
+        std::string prefix = trie.LongestToken(str, i);
+
+        if (!prefix.empty()) {
+            ids.push_back(token_to_id_[prefix]);
+            i += prefix.size();
+        } else {
+            ids.push_back(token_to_id_["<UNK>"]);
+            i++;
         }
     }
+
     return ids;
 }
 
@@ -142,4 +150,12 @@ std::string BPETokenizer::Decode(std::vector<size_t> ids) {
         result += vocab_[id];
     }
     return result;
+}
+
+size_t BPETokenizer::GetVocabSize() const {
+    return vocab_.size();
+}
+
+size_t BPETokenizer::GetTokenId(const std::string& token) const {
+    return token_to_id_.at(token);
 }

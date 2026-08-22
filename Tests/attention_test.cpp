@@ -1,4 +1,4 @@
-#include "attention.h"
+#include "../Attention/attention.h"
 #include "../Tensor/tensor.h"
 #include <iostream>
 
@@ -38,11 +38,11 @@ int main() {
     // 2. Создаём Attention (без маски)
     std::cout << "Test 1: Attention without mask\n";
     MultiHeadAttention attn(embed_dim, num_heads);
-    Tensor output = attn.forward(x);
+    auto output = attn.forward(x);
 
-    print_shape("output", output);
+    print_shape("output", *output);
     std::cout << "Output shape matches input: "
-              << (output.GetShape() == x.GetShape() ? "✅ YES" : "❌ NO") << "\n\n";
+              << (output->GetShape() == x.GetShape() ? "✅ YES" : "❌ NO") << "\n\n";
 
     // 3. Проверяем маску
     std::cout << "Test 2: Causal mask\n";
@@ -59,13 +59,13 @@ int main() {
     std::cout << "Test 3: Multi-Head\n";
     std::cout << "num_heads = " << num_heads << "\n";
     std::cout << "head_dim = " << embed_dim / num_heads << "\n";
-    std::cout << "output shape: (" << output.GetShape()[0] << ", "
-              << output.GetShape()[1] << ", " << output.GetShape()[2] << ")\n";
+    std::cout << "output shape: (" << output->GetShape()[0] << ", "
+              << output->GetShape()[1] << ", " << output->GetShape()[2] << ")\n";
     std::cout << "Expected: (" << batch << ", " << seq_len << ", " << embed_dim << ")\n";
     std::cout << "Multi-Head works: "
-              << (output.GetShape()[0] == batch && 
-                  output.GetShape()[1] == seq_len && 
-                  output.GetShape()[2] == embed_dim ? "✅ YES" : "❌ NO") << "\n";
+              << (output->GetShape()[0] == batch && 
+                  output->GetShape()[1] == seq_len && 
+                  output->GetShape()[2] == embed_dim ? "✅ YES" : "❌ NO") << "\n";
 
     std::cout << "\n=== Attention Test Completed ===\n";
     return 0;

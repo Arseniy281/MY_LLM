@@ -1,4 +1,4 @@
-#include "rms_norm.h"
+#include "../Normalization/rms_norm.h"
 #include "../Tensor/tensor.h"
 #include <iostream>
 #include <cmath>

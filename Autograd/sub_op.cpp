@@ -13,21 +13,13 @@ std::shared_ptr<Tensor> SubOp::forward(const std::vector<std::shared_ptr<Tensor>
 }
 
 Tensor SubOp::backward(const Tensor& grad_output) {
-    if (first_->Grad() != nullptr) {
-        *first_->Grad() += grad_output;
-    } else {
-        first_->Grad() = std::make_shared<Tensor>(grad_output);
-    }
+    first_->AddGrad(grad_output);
 
     if (first_->GradFn() != nullptr) {
         first_->GradFn()->backward(grad_output);
     }
 
-    if (second_->Grad() != nullptr) {
-        *second_->Grad() -= grad_output;
-    } else {
-        second_->Grad() = std::make_shared<Tensor>(-grad_output);
-    }
+    second_->AddGrad(-grad_output);
 
     if (second_->GradFn() != nullptr) {
         second_->GradFn()->backward(-grad_output);

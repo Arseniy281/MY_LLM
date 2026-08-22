@@ -297,26 +297,46 @@ void Tensor::CheckBeforeConcatenate(const std::vector<Tensor>& tensors, size_t a
 }
 
 Tensor Tensor::Concatenate(const std::vector<Tensor>& tensors, size_t axis) {
-    CheckBeforeConcatenate(tensors, axis);
-    std::vector<size_t> final_shape = tensors[0].GetShape();
-    size_t last_dim = final_shape.back();
-    for (size_t t = 1; t < tensors.size(); t++) {
-        last_dim += tensors[t].GetShape().back();
+    if (tensors.empty()) {
+        throw std::runtime_error("Tensors must have size > 0");
     }
-    final_shape[axis] = last_dim;
+    
+    std::vector<size_t> final_shape = tensors[0].GetShape();
+    for (size_t t = 1; t < tensors.size(); t++) {
+        auto shape = tensors[t].GetShape();
+        if (shape.size() != final_shape.size()) {
+            throw std::runtime_error("All tensors must have same rank");
+        }
+        for (size_t j = 0; j < final_shape.size(); j++) {
+            if (j != axis && final_shape[j] != shape[j]) {
+                throw std::runtime_error("All tensors must have same shape except on axis");
+            }
+        }
+    }
+    
+    size_t total_dim = 0;
+    for (const auto& t : tensors) {
+        total_dim += t.GetShape()[axis];
+    }
+    final_shape[axis] = total_dim;
+    
     Tensor output(final_shape);
     float* result_data = output.RawData();
     size_t offset = 0;
-    for (size_t t = 0; t < tensors.size(); t++) {
-        const float* cur_data = tensors[t].RawData();
-        for (size_t i = 0; i < tensors[t].GetSize(); i++) {
-            std::vector<size_t> coords = IndexToCoord(i, tensors[t].GetShape());
+    
+    for (const auto& tensor : tensors) {
+        const float* data = tensor.RawData();
+        size_t tensor_size = tensor.GetSize();
+        
+        for (size_t i = 0; i < tensor_size; i++) {
+            std::vector<size_t> coords = IndexToCoord(i, tensor.GetShape());
             coords[axis] += offset;
-            size_t final_idx = CoordToIndex(coords, final_shape);
-            result_data[final_idx] = cur_data[i];
+            size_t idx = CoordToIndex(coords, final_shape);
+            result_data[idx] = data[i];
         }
-        offset += tensors[t].GetShape()[axis];
+        offset += tensor.GetShape()[axis];
     }
+    
     return output;
 }
 

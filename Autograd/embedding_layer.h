@@ -20,4 +20,10 @@ public:
 
     void ClearGrad();
     void Update(float lr);
+    void ScaleGrad(float factor);
+
+    void Save(const std::string& path) const;
+    void Load(const std::string& path);
+    
+    const Tensor& GetEmbeddings() const;
 };

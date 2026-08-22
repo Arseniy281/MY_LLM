@@ -21,11 +21,8 @@ std::shared_ptr<Tensor> SumOp::forward(const std::vector<std::shared_ptr<Tensor>
 Tensor SumOp::backward(const Tensor& grad_output) {
     Tensor grad_input(parent_->GetShape(), grad_output.RawData()[0]);
     
-    if (parent_->Grad() != nullptr) {
-        *parent_->Grad() += grad_input;
-    } else {
-        parent_->Grad() = std::make_shared<Tensor>(grad_input);
-    }
+    parent_->AddGrad(grad_input);
+
     
     if (parent_->GradFn() != nullptr) {
         parent_->GradFn()->backward(grad_input);

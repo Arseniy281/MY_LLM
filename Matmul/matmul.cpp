@@ -158,38 +158,57 @@ Tensor MatMul(const Tensor& A, const Tensor& B) {
         throw std::runtime_error("Incompatible shapes for MatMul");
     }
     
-    std::vector<size_t> final_shape = Tensor::GetFinalShape(s1, s2);
-    final_shape[final_shape.size() - 2] = s1[s1.size() - 2];
+    std::vector<size_t> final_shape = s1;
     final_shape[final_shape.size() - 1] = s2[s2.size() - 1];
-
+    
     Tensor result(final_shape);
     float* result_data = result.RawData();
-    size_t final_size = Tensor::GetFinalSize(final_shape);
     
-    for (size_t i = 0; i < final_size; i++) {
-        std::vector<size_t> coords = Tensor::IndexToCoord(i, final_shape);
+    size_t batch_dims = final_shape.size() - 2;
+    size_t M = s1[s1.size() - 2];
+    size_t K = s1[s1.size() - 1];
+    size_t N = s2[s2.size() - 1];
+    
+    size_t batch_count = 1;
+    for (size_t i = 0; i < batch_dims; i++) {
+        batch_count *= final_shape[i];
+    }
+    
+    for (size_t batch_idx = 0; batch_idx < batch_count; batch_idx++) {
+        std::vector<size_t> batch_shape = final_shape;
+        batch_shape.resize(batch_dims);
+        std::vector<size_t> batch_coords = Tensor::IndexToCoord(batch_idx, batch_shape);
         
-        size_t row = coords[coords.size() - 2];
-        size_t col = coords[coords.size() - 1];
+        size_t offset_A = 0;
+        size_t offset_B = 0;
+        size_t offset_C = 0;
+        size_t stride_A = 1;
+        size_t stride_B = 1;
+        size_t stride_C = 1;
         
-        std::vector<size_t> coords_A = coords;
-        std::vector<size_t> coords_B = coords;
-        
-        size_t k_dim = s1.back();
-        
-        float sum = 0.0f;
-        for (size_t k = 0; k < k_dim; k++) {
-            coords_A[coords_A.size() - 2] = row;
-            coords_A[coords_A.size() - 1] = k;
-            
-            coords_B[coords_B.size() - 2] = k;
-            coords_B[coords_B.size() - 1] = col;
-            size_t idx_A = Tensor::BroadcastIndex(s1, final_shape, Tensor::CoordToIndex(coords_A, final_shape));
-            size_t idx_B = Tensor::BroadcastIndex(s2, final_shape, Tensor::CoordToIndex(coords_B, final_shape));
-            sum += A.RawData()[idx_A] * B.RawData()[idx_B];
+        for (int i = batch_dims - 1; i >= 0; i--) {
+            offset_A += batch_coords[i] * stride_A;
+            offset_B += batch_coords[i] * stride_B;
+            offset_C += batch_coords[i] * stride_C;
+            stride_A *= s1[i];
+            stride_B *= s2[i];
+            stride_C *= final_shape[i];
         }
         
-        result_data[i] = sum;
+        const float* A_data = A.RawData() + offset_A * M * K;
+        const float* B_data = B.RawData() + offset_B * K * N;
+        float* C_data = result_data + offset_C * M * N;
+        
+        for (size_t i = 0; i < M; i++) {
+            for (size_t k = 0; k < K; k++) {
+                float a_val = A_data[i * K + k];
+                if (a_val == 0.0f) { continue; }
+                for (size_t j = 0; j < N; j++) {
+                    C_data[i * N + j] += a_val * B_data[k * N + j];
+                }
+            }
+        }
     }
+    
     return result;
 }

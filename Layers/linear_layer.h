@@ -21,7 +21,14 @@ public:
 
     void ClearGrad();
     void Update(float lr);
+    void ScaleGrad(float factor);
 
     std::shared_ptr<Tensor> forward(const Tensor& x);
     Tensor backward(const Tensor& grad_output);
+
+    void Save(const std::string& folder, const std::string& name) const;
+    void Load(const std::string& folder, const std::string& name);
+
+    const Tensor& GetWeights() const;
+    const Tensor& GetBias() const;
 };

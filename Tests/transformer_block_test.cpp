@@ -1,6 +1,7 @@
-#include "transformer.h"
+#include "../Transformer/transformer_block.h"
 #include "../Tensor/tensor.h"
 #include <iostream>
+#include <cmath>
 
 void print_shape(const std::string& name, const Tensor& t) {
     std::cout << name << " shape: (";
@@ -13,9 +14,8 @@ void print_shape(const std::string& name, const Tensor& t) {
 }
 
 int main() {
-    std::cout << "=== Transformer Test ===\n\n";
+    std::cout << "=== TransformerBlock Test ===\n\n";
 
-    size_t num_blocks = 2;
     size_t batch = 2;
     size_t seq_len = 4;
     size_t embed_dim = 8;
@@ -27,28 +27,35 @@ int main() {
         x.RawData()[i] = static_cast<float>(i) / 10.0f;
     }
     print_shape("x", x);
+    std::cout << "x[0,0,0] = " << x.at({0, 0, 0}) << "\n\n";
 
-    Transformer model(num_blocks, embed_dim, num_heads, hidden_dim);
+    TransformerBlock block(embed_dim, num_heads, hidden_dim);
 
-    Tensor y = model.forward(x);
-    print_shape("y", y);
+    auto y = block.forward(x);
+    print_shape("y", *y);
+    std::cout << "y[0,0,0] = " << y->at({0, 0, 0}) << "\n\n";
 
-    if (y.GetShape() == x.GetShape()) {
-        std::cout << "✅ Shape preserved through " << num_blocks << " blocks\n";
+    if (y->GetShape() == x.GetShape()) {
+        std::cout << "✅ Shape preserved: " << y->GetShape().size() << "D\n";
+    } else {
+        std::cout << "❌ Shape mismatch!\n";
     }
 
     Tensor grad_output({batch, seq_len, embed_dim}, 1.0f);
-    Tensor grad_x = model.backward(grad_output);
+    Tensor grad_x = block.backward(grad_output);
     print_shape("grad_x", grad_x);
+    std::cout << "grad_x[0,0,0] = " << grad_x.at({0, 0, 0}) << "\n\n";
 
     if (grad_x.GetShape() == x.GetShape()) {
         std::cout << "✅ grad_x shape matches input\n";
+    } else {
+        std::cout << "❌ grad_x shape mismatch!\n";
     }
 
-    model.Update(0.01f);
-    model.ClearGrad();
+    block.Update(0.01f);
+    block.ClearGrad();
     std::cout << "✅ Update + ClearGrad passed\n";
 
-    std::cout << "\n=== Transformer Test Completed ===\n";
+    std::cout << "\n=== TransformerBlock Test Completed ===\n";
     return 0;
 }

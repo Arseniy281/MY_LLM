@@ -30,11 +30,7 @@ Tensor ReLU::backward(const Tensor& grad_output) {
     Tensor grad_input(parent_->GetShape(), grad_input_data);
     grad_input *= grad_output;
 
-    if (parent_->Grad() != nullptr) {
-        *parent_->Grad() += grad_input;
-    } else {
-        parent_->Grad() = std::make_shared<Tensor>(grad_input);
-    }
+    parent_->AddGrad(grad_input);
 
     if (parent_->GradFn() != nullptr) {
         parent_->GradFn()->backward(grad_input);

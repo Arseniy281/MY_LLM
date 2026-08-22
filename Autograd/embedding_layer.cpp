@@ -30,11 +30,8 @@ Tensor EmbeddingLayer::backward(const Tensor& grad_output) {
         }
     }
 
-    if (indices_->Grad() != nullptr) {
-        *indices_->Grad() += grad_output;
-    } else {
-        indices_->Grad() = std::make_shared<Tensor>(grad_output);
-    }
+    indices_->AddGrad(grad_output);
+
 
     return grad_output;
 }
@@ -47,10 +44,31 @@ void EmbeddingLayer::ClearGrad() {
     }
 }
 
+void EmbeddingLayer::ScaleGrad(float factor) {
+    if (grad_ == nullptr) return;
+    for (size_t i = 0; i < vocab_size_; i++) {
+        for (size_t j = 0; j < embedding_dim_; j++) {
+            grad_->at({i, j}) *= factor;
+        }
+    }
+}
+
 void EmbeddingLayer::Update(float lr) {
     for (size_t i = 0; i < vocab_size_; i++) {
         for (size_t j = 0; j < embedding_dim_; j++) {
             embeddings_.at({i, j}) -= lr * grad_->at({i, j});
         }
     }
+}
+
+void EmbeddingLayer::Save(const std::string& path) const {
+    embeddings_.SaveTensor(path);
+}
+
+void EmbeddingLayer::Load(const std::string& path) {
+    embeddings_ = Tensor::LoadTensor(path);
+}
+
+const Tensor& EmbeddingLayer::GetEmbeddings() const { 
+    return embeddings_; 
 }

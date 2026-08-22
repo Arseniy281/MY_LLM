@@ -27,5 +27,7 @@ public:
 
     std::vector<size_t> Encode(const std::string& str);
     std::string Decode(std::vector<size_t> ids);
+    size_t GetVocabSize() const;
+    size_t GetTokenId(const std::string& token) const;
 
 };

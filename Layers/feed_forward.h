@@ -1,6 +1,7 @@
 #include "../Layers/linear_layer.h"
 #include "../Autograd/gelu.h"
 #include "../Tensor/tensor.h"
+#include <string>
 
 class FeedForward {
 private:
@@ -13,4 +14,8 @@ public:
     Tensor backward(const Tensor& grad_output);
     void Update(float lr);
     void ClearGrad();
+    void ScaleGrad(float factor);
+
+    void Save(const std::string& folder) const;
+    void Load(const std::string& folder);
 };

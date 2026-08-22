@@ -5,6 +5,7 @@
 #include <numeric>
 #include <random>
 #include <memory>
+#include <fstream>
 #include "../Autograd/operation.h"
 
 static const float EPSILON = 1e-8f;
@@ -66,6 +67,9 @@ public:
     static std::vector<size_t> GetFinalShape(const std::vector<size_t>& first, const std::vector<size_t>& second);
     static size_t GetFinalSize(const std::vector<size_t>& final_shape);
 
+    void SaveTensor(const std::string& name) const;
+    static Tensor LoadTensor(const std::string& path);
+
     Tensor Transpose();
     void Reshape(std::vector<size_t> new_shape);
     Tensor Reshape(std::vector<size_t> new_shape) const;
@@ -81,6 +85,8 @@ public:
     void PrintInfo() const;
 
     std::shared_ptr<Tensor> Grad() const;
+    void SetGrad(std::shared_ptr<Tensor> grad);
+    void AddGrad(Tensor grad);
     void PrintGrad() const;
     void ClearGrad();
     Operation* GradFn() const;

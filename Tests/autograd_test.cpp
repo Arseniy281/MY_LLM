@@ -1,24 +1,27 @@
+// ==================== autograd_test.cpp ====================
 #include "../Tensor/tensor.h"
-#include "add_op.h"
-#include "sub_op.h"
-#include "mul_op.h"
-#include "square_op.h"
-#include "sum_op.h"
+#include "../Autograd/add_op.h"
+#include "../Autograd/sub_op.h"
+#include "../Autograd/mul_op.h"
+#include "../Autograd/square_op.h"
+#include "../Autograd/sum_op.h"
 #include <iostream>
+#include <memory>
 
-void CheckGradient(const std::string& name, std::shared_ptr<Tensor>& tensor) {
+void CheckGradient(const std::string& name, std::shared_ptr<Tensor> tensor) {
     if (!tensor || !tensor->Grad()) {
         std::cout << "  ❌ " << name << ".grad_ is nullptr!\n";
         return;
     }
     std::cout << "  ✅ " << name << ".grad_:\n";
-    tensor->PrintGrad();
+    tensor->Grad()->print();
 }
 
 int main() {
     try {
         std::cout << "=== Autograd Test ===\n\n";
 
+        // 1. Создаём данные
         auto x = std::make_shared<Tensor>(Tensor({2, 2}));
         x->at({0, 0}) = 1.0f; x->at({0, 1}) = 2.0f;
         x->at({1, 0}) = 3.0f; x->at({1, 1}) = 4.0f;
@@ -35,6 +38,7 @@ int main() {
         y_true->at({0, 0}) = 2.0f;
         y_true->at({1, 0}) = 4.0f;
 
+        // 2. Строим граф
         MulOp mul_op;
         AddOp add_op;
         SubOp sub_op;
@@ -53,10 +57,12 @@ int main() {
         }
         std::cout << "✅ Graph built successfully\n";
 
+        // 3. Backward
         Tensor grad_output({1, 1}, 1.0f);
         loss->backward(grad_output);
         std::cout << "✅ Backward completed\n\n";
 
+        // 4. Проверка градиентов
         std::cout << "Gradients:\n";
         CheckGradient("W", W);
         CheckGradient("b", b);
@@ -65,6 +71,19 @@ int main() {
         CheckGradient("y", y);
         CheckGradient("diff", diff);
         CheckGradient("sq", sq);
+
+        // 5. Проверяем, что градиенты не нулевые
+        std::cout << "\nVerifying gradients are non-zero:\n";
+        bool has_grad = false;
+        if (W->Grad()) {
+            for (size_t i = 0; i < W->Grad()->GetSize(); ++i) {
+                if (W->Grad()->at(i) != 0.0f) {
+                    has_grad = true;
+                    break;
+                }
+            }
+        }
+        std::cout << "  W.grad_ has non-zero values: " << (has_grad ? "✅ YES" : "❌ NO") << "\n";
 
         std::cout << "\n✅ All tests passed!\n";
 

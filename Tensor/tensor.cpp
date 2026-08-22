@@ -1,4 +1,5 @@
 #include "tensor.h"
+#include <fstream>
 
 size_t Tensor::ComputeIndex(const std::vector<size_t>& indexes) const {
     if (indexes.size() != rank_) {
@@ -33,7 +34,7 @@ Tensor::Tensor(std::vector<size_t> shape, float k) : shape_(std::move(shape)) {
 
 Tensor Tensor::Random(std::vector<size_t> shape, float min, float max) {
     Tensor result(shape);
-    std::mt19937 gen(42);
+    static std::mt19937 gen(42);
     std::uniform_real_distribution<float> dist(min, max);
     for (size_t i = 0; i < result.size_; i++) {
         result.data_[i] = dist(gen);
@@ -139,6 +140,18 @@ std::shared_ptr<Tensor> Tensor::Grad() const {
     return grad_;
 }
 
+void Tensor::SetGrad(std::shared_ptr<Tensor> grad) {
+        grad_ = grad;
+}
+
+void Tensor::AddGrad(Tensor grad) {
+    if (grad_ == nullptr) {
+        grad_ = std::make_shared<Tensor>(std::move(grad));
+    } else {
+        *grad_ += grad;
+    }
+}
+
 void Tensor::ClearGrad() {
     grad_ = nullptr;
 }
@@ -181,4 +194,47 @@ Tensor Tensor::Mean(int axis) {
     Tensor result = SumAxis(axis);
     result /= dim;
     return result;
+}
+
+void Tensor::SaveTensor(const std::string& path) const {
+    std::ofstream file(path + ".bin", std::ios::binary);
+
+    if (!file.is_open()) {
+        throw std::runtime_error("Cannot open file: " + path + ".bin");
+    }
+    
+    for (size_t i = 0; i < shape_.size(); i++) {
+        file << shape_[i];
+        if (i + 1 < shape_.size()) file << " ";
+    }
+    file << "\n";
+
+    file << std::setprecision(10);
+    for (size_t i = 0; i < size_; i++) {
+        file << data_[i];
+        if (i + 1 < size_) file << " ";
+    }
+    file << "\n";
+}
+
+Tensor Tensor::LoadTensor(const std::string& path) {
+    std::ifstream file(path + ".bin");
+    if (!file.is_open()) {
+        throw std::runtime_error("Cannot open file: " + path + ".bin");
+    }
+
+    std::vector<size_t> shape;
+    size_t dim;
+    while (file.peek() != '\n' && file >> dim) {
+        shape.push_back(dim);
+    }
+    file.ignore();
+
+    std::vector<float> data;
+    float value;
+    while (file >> value) {
+        data.push_back(value);
+    }
+
+    return Tensor(shape, data);
 }

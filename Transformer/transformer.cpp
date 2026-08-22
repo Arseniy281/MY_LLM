@@ -12,10 +12,10 @@ Transformer::Transformer(size_t n, size_t embed_dim,
     blocks_count_ = n;
 }
 
-Tensor Transformer::forward(const Tensor& x) {
-    Tensor input = x;
+std::shared_ptr<Tensor> Transformer::forward(const Tensor& x) {
+    auto input = std::make_shared<Tensor>(x);
     for (size_t i = 0; i < blocks_count_; i++) {
-        input = blocks_[i].forward(input);
+        input = blocks_[i].forward(*input);
     }
     return input;
 }
@@ -37,5 +37,35 @@ void Transformer::Update(float lr) {
 void Transformer::ClearGrad() {
     for (auto& block : blocks_) {
         block.ClearGrad();
+    }
+}
+
+void Transformer::ScaleGrad(float factor) {
+    for (auto& block : blocks_) {
+        block.ScaleGrad(factor);
+    }
+}
+
+void Transformer::Save(const std::string& folder) const {
+    for (size_t i = 0; i < blocks_count_; i++) {
+        blocks_[i].Save(folder + "/block_" + std::to_string(i));
+    }
+}
+
+void Transformer::Load(const std::string& folder) {
+    for (size_t i = 0; i < blocks_count_; i++) {
+        blocks_[i].Load(folder + "/block_" + std::to_string(i));
+    }
+}
+
+void Transformer::ResetCache() {
+    for (auto& block : blocks_) {
+        block.ResetCache();
+    }
+}
+
+void Transformer::SetUseKVCache(bool value) {
+    for (auto& block : blocks_) {
+        block.SetUseKVCache(value);
     }
 }

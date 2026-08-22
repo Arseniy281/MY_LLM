@@ -14,4 +14,8 @@ public:
     Tensor GetGamma();
     void Update(float lr);
     void ClearGrad();
+    void ScaleGrad(float factor);
+
+    void Save(const std::string& path) const;
+    void Load(const std::string& path);
 };

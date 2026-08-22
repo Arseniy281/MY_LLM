@@ -1,7 +1,7 @@
 #include <iostream>
 #include "../Tensor/tensor.h"
-#include "linear_layer.h"
-#include "mse_loss.h"
+#include "../Layers/linear_layer.h"
+#include "../Layers/mse_loss.h"
 #include "../Autograd/relu.h"
 #include "../Autograd/sigmoid.h"
 #include "../Autograd/tanh_op.h"

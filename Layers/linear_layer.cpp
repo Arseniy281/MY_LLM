@@ -17,13 +17,44 @@ void LinearLayer::ClearGrad() {
 void LinearLayer::Update(float lr) {
     if (W_->Grad() != nullptr) {
         float sum = 0.0f;
-        for (size_t i = 0; i < W_->Grad()->GetSize(); ++i) {
-            sum += W_->Grad()->at(i);
-        }        
+        float max_grad = 0.0f;
+
+        for (size_t i = 0; i < W_->Grad()->GetSize(); i++) {
+            float value = W_->Grad()->at(i);
+
+            sum += std::abs(value);
+            max_grad = std::max(max_grad, std::abs(value));
+        }
+
         *W_ = *W_ - (*W_->Grad()) * lr;
     }
+
     if (b_->Grad() != nullptr) {
+        float sum = 0.0f;
+        float max_grad = 0.0f;
+
+        for (size_t i = 0; i < b_->Grad()->GetSize(); i++) {
+            float value = b_->Grad()->at(i);
+
+            sum += std::abs(value);
+            max_grad = std::max(max_grad, std::abs(value));
+        }
+
         *b_ = *b_ - (*b_->Grad()) * lr;
+    }
+}
+
+void LinearLayer::ScaleGrad(float factor) {
+    if (W_->Grad() != nullptr) {
+        for (size_t i = 0; i < W_->Grad()->GetSize(); i++) {
+            W_->Grad()->at(i) *= factor;
+        }
+    }
+
+    if (b_->Grad() != nullptr) {
+        for (size_t i = 0; i < b_->Grad()->GetSize(); i++) {
+            b_->Grad()->at(i) *= factor;
+        }
     }
 }
 
@@ -35,18 +66,37 @@ std::shared_ptr<Tensor> LinearLayer::forward(const Tensor& x) {
 }
 
 Tensor LinearLayer::backward(const Tensor& grad_output) {
-    if (saved_added_->GradFn() != nullptr) {
-        saved_added_->GradFn()->backward(grad_output);
-    }
-
     Tensor grad_x;
-    if (saved_mult_->GradFn() != nullptr && saved_mult_->Grad() != nullptr) {
-        grad_x = saved_mult_->GradFn()->backward(*saved_mult_->Grad());
+
+    if (saved_added_->GradFn() != nullptr) {
+        grad_x = saved_added_->GradFn()->backward(grad_output);
     } else {
-        std::vector<size_t> input_shape = saved_mult_->GetShape();
+        std::vector<size_t> input_shape = saved_added_->GetShape();
         input_shape.back() = input_size_;
         grad_x = Tensor(input_shape, 0.0f);
     }
 
+    float sum = 0.0f;
+
+    for (size_t i = 0; i < grad_x.GetSize(); i++) {
+        sum += std::abs(grad_x.at(i));
+    }
     return grad_x;
+}
+
+void LinearLayer::Save(const std::string& folder, const std::string& name) const {
+    W_->SaveTensor(folder + "/" + name + "_W");
+    b_->SaveTensor(folder + "/" + name + "_b");
+}
+
+void LinearLayer::Load(const std::string& folder, const std::string& name) {
+    *W_ = Tensor::LoadTensor(folder + "/" + name + "_W");
+    *b_ = Tensor::LoadTensor(folder + "/" + name + "_b");
+}
+
+const Tensor& LinearLayer::GetWeights() const { 
+    return *W_;
+}
+const Tensor& LinearLayer::GetBias() const { 
+    return *b_;
 }
